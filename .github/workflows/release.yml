@@ -79,7 +79,7 @@ jobs:
           }
 
       - name: Build Tauri app (Windows portable exe)
-        run: pnpm tauri build -- --no-bundle
+        run: pnpm tauri build --bundles none
 
       - name: Rename executable
         shell: pwsh
