@@ -30,14 +30,11 @@ pub async fn add_config(
     relative_path: String,
     state: State<'_, AppState>,
 ) -> Result<i64, String> {
-    let pool = state.pool.lock().unwrap();
-    let pool = pool.as_ref().ok_or("Database not initialized")?;
-
-    let workspace_root = state.workspace_root.lock().unwrap();
-    let workspace_root = workspace_root.as_ref().ok_or("Workspace not set")?;
+    let pool = state.pool.lock().unwrap().clone().ok_or("Database not initialized")?;
+    let workspace_root = state.workspace_root.lock().unwrap().clone().ok_or("Workspace not set")?;
 
     // Read file content
-    let content = file_system::read_file(workspace_root, &relative_path)
+    let content = file_system::read_file(&workspace_root, &relative_path)
         .map_err(|e| format!("Failed to read file: {}", e))?;
 
     let config = CreateConfig {
@@ -46,7 +43,7 @@ pub async fn add_config(
         original_content: content,
     };
 
-    let id = db::add_config(pool, config)
+    let id = db::add_config(&pool, config)
         .await
         .map_err(|e| format!("Failed to add config: {}", e))?;
 
@@ -55,10 +52,9 @@ pub async fn add_config(
 
 #[tauri::command]
 pub async fn get_all_configs(state: State<'_, AppState>) -> Result<Vec<Config>, String> {
-    let pool = state.pool.lock().unwrap();
-    let pool = pool.as_ref().ok_or("Database not initialized")?;
+    let pool = state.pool.lock().unwrap().clone().ok_or("Database not initialized")?;
 
-    let configs = db::get_all_configs(pool)
+    let configs = db::get_all_configs(&pool)
         .await
         .map_err(|e| format!("Failed to get configs: {}", e))?;
 
@@ -67,10 +63,9 @@ pub async fn get_all_configs(state: State<'_, AppState>) -> Result<Vec<Config>, 
 
 #[tauri::command]
 pub async fn get_config_by_id(id: i64, state: State<'_, AppState>) -> Result<Option<Config>, String> {
-    let pool = state.pool.lock().unwrap();
-    let pool = pool.as_ref().ok_or("Database not initialized")?;
+    let pool = state.pool.lock().unwrap().clone().ok_or("Database not initialized")?;
 
-    let config = db::get_config_by_id(pool, id)
+    let config = db::get_config_by_id(&pool, id)
         .await
         .map_err(|e| format!("Failed to get config: {}", e))?;
 
@@ -82,19 +77,16 @@ pub async fn check_file_status(
     id: i64,
     state: State<'_, AppState>,
 ) -> Result<FileStatus, String> {
-    let pool = state.pool.lock().unwrap();
-    let pool = pool.as_ref().ok_or("Database not initialized")?;
+    let pool = state.pool.lock().unwrap().clone().ok_or("Database not initialized")?;
+    let workspace_root = state.workspace_root.lock().unwrap().clone().ok_or("Workspace not set")?;
 
-    let workspace_root = state.workspace_root.lock().unwrap();
-    let workspace_root = workspace_root.as_ref().ok_or("Workspace not set")?;
-
-    let config = db::get_config_by_id(pool, id)
+    let config = db::get_config_by_id(&pool, id)
         .await
-        .map_err(|e| format!("Failed to get config: ", e))?
+        .map_err(|e| format!("Failed to get config: {}", e))?
         .ok_or("Config not found")?;
 
     // Calculate hash of current file on disk
-    let disk_hash = file_system::calculate_file_hash(workspace_root, &config.path)
+    let disk_hash = file_system::calculate_file_hash(&workspace_root, &config.path)
         .map_err(|e| format!("Failed to calculate file hash: {}", e))?;
 
     // Calculate hash of content in database
@@ -111,18 +103,15 @@ pub async fn get_config_for_merge(
     id: i64,
     state: State<'_, AppState>,
 ) -> Result<MergeData, String> {
-    let pool = state.pool.lock().unwrap();
-    let pool = pool.as_ref().ok_or("Database not initialized")?;
+    let pool = state.pool.lock().unwrap().clone().ok_or("Database not initialized")?;
+    let workspace_root = state.workspace_root.lock().unwrap().clone().ok_or("Workspace not set")?;
 
-    let workspace_root = state.workspace_root.lock().unwrap();
-    let workspace_root = workspace_root.as_ref().ok_or("Workspace not set")?;
-
-    let config = db::get_config_by_id(pool, id)
+    let config = db::get_config_by_id(&pool, id)
         .await
         .map_err(|e| format!("Failed to get config: {}", e))?
         .ok_or("Config not found")?;
 
-    let disk_content = file_system::read_file(workspace_root, &config.path)
+    let disk_content = file_system::read_file(&workspace_root, &config.path)
         .map_err(|e| format!("Failed to read file: {}", e))?;
 
     Ok(MergeData {
@@ -137,10 +126,9 @@ pub async fn resolve_conflict(
     merged_content: String,
     state: State<'_, AppState>,
 ) -> Result<(), String> {
-    let pool = state.pool.lock().unwrap();
-    let pool = pool.as_ref().ok_or("Database not initialized")?;
+    let pool = state.pool.lock().unwrap().clone().ok_or("Database not initialized")?;
 
-    db::update_original_content(pool, id, &merged_content)
+    db::update_original_content(&pool, id, &merged_content)
         .await
         .map_err(|e| format!("Failed to update content: {}", e))?;
 
@@ -153,10 +141,9 @@ pub async fn update_original_content(
     content: String,
     state: State<'_, AppState>,
 ) -> Result<(), String> {
-    let pool = state.pool.lock().unwrap();
-    let pool = pool.as_ref().ok_or("Database not initialized")?;
+    let pool = state.pool.lock().unwrap().clone().ok_or("Database not initialized")?;
 
-    db::update_original_content(pool, id, &content)
+    db::update_original_content(&pool, id, &content)
         .await
         .map_err(|e| format!("Failed to update content: {}", e))?;
 
@@ -169,10 +156,9 @@ pub async fn update_sanitized_content(
     content: Option<String>,
     state: State<'_, AppState>,
 ) -> Result<(), String> {
-    let pool = state.pool.lock().unwrap();
-    let pool = pool.as_ref().ok_or("Database not initialized")?;
+    let pool = state.pool.lock().unwrap().clone().ok_or("Database not initialized")?;
 
-    db::update_sanitized_content(pool, id, content.as_deref())
+    db::update_sanitized_content(&pool, id, content.as_deref())
         .await
         .map_err(|e| format!("Failed to update sanitized content: {}", e))?;
 
@@ -184,18 +170,15 @@ pub async fn write_to_file_direct(
     id: i64,
     state: State<'_, AppState>,
 ) -> Result<(), String> {
-    let pool = state.pool.lock().unwrap();
-    let pool = pool.as_ref().ok_or("Database not initialized")?;
+    let pool = state.pool.lock().unwrap().clone().ok_or("Database not initialized")?;
+    let workspace_root = state.workspace_root.lock().unwrap().clone().ok_or("Workspace not set")?;
 
-    let workspace_root = state.workspace_root.lock().unwrap();
-    let workspace_root = workspace_root.as_ref().ok_or("Workspace not set")?;
-
-    let config = db::get_config_by_id(pool, id)
+    let config = db::get_config_by_id(&pool, id)
         .await
         .map_err(|e| format!("Failed to get config: {}", e))?
         .ok_or("Config not found")?;
 
-    file_system::write_file(workspace_root, &config.path, &config.original_content)
+    file_system::write_file(&workspace_root, &config.path, &config.original_content)
         .map_err(|e| format!("Failed to write file: {}", e))?;
 
     Ok(())
@@ -206,13 +189,10 @@ pub async fn write_to_file_sanitized(
     id: i64,
     state: State<'_, AppState>,
 ) -> Result<(), String> {
-    let pool = state.pool.lock().unwrap();
-    let pool = pool.as_ref().ok_or("Database not initialized")?;
+    let pool = state.pool.lock().unwrap().clone().ok_or("Database not initialized")?;
+    let workspace_root = state.workspace_root.lock().unwrap().clone().ok_or("Workspace not set")?;
 
-    let workspace_root = state.workspace_root.lock().unwrap();
-    let workspace_root = workspace_root.as_ref().ok_or("Workspace not set")?;
-
-    let config = db::get_config_by_id(pool, id)
+    let config = db::get_config_by_id(&pool, id)
         .await
         .map_err(|e| format!("Failed to get config: {}", e))?
         .ok_or("Config not found")?;
@@ -226,7 +206,7 @@ pub async fn write_to_file_sanitized(
             .map_err(|e| format!("Failed to sanitize content: {}", e))?
     };
 
-    file_system::write_file(workspace_root, &config.path, &sanitized_content)
+    file_system::write_file(&workspace_root, &config.path, &sanitized_content)
         .map_err(|e| format!("Failed to write file: {}", e))?;
 
     Ok(())
@@ -234,10 +214,9 @@ pub async fn write_to_file_sanitized(
 
 #[tauri::command]
 pub async fn delete_config(id: i64, state: State<'_, AppState>) -> Result<(), String> {
-    let pool = state.pool.lock().unwrap();
-    let pool = pool.as_ref().ok_or("Database not initialized")?;
+    let pool = state.pool.lock().unwrap().clone().ok_or("Database not initialized")?;
 
-    db::delete_config(pool, id)
+    db::delete_config(&pool, id)
         .await
         .map_err(|e| format!("Failed to delete config: {}", e))?;
 
@@ -249,10 +228,9 @@ pub async fn get_sanitized_preview(
     id: i64,
     state: State<'_, AppState>,
 ) -> Result<String, String> {
-    let pool = state.pool.lock().unwrap();
-    let pool = pool.as_ref().ok_or("Database not initialized")?;
+    let pool = state.pool.lock().unwrap().clone().ok_or("Database not initialized")?;
 
-    let config = db::get_config_by_id(pool, id)
+    let config = db::get_config_by_id(&pool, id)
         .await
         .map_err(|e| format!("Failed to get config: {}", e))?
         .ok_or("Config not found")?;
