@@ -1,0 +1,117 @@
+name: Build Windows Portable
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build-windows:
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Get version (auto increment)
+        id: version
+        shell: pwsh
+        run: |
+          $version = "0.1.${{ github.run_number }}"
+          echo "VERSION=$version" >> $env:GITHUB_OUTPUT
+          echo "Version: $version"
+
+      - name: Update version in tauri.conf.json
+        shell: pwsh
+        run: |
+          $config = Get-Content src-tauri/tauri.conf.json | ConvertFrom-Json
+          $config.version = "${{ steps.version.outputs.VERSION }}"
+          $config | ConvertTo-Json -Depth 10 | Set-Content src-tauri/tauri.conf.json
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v3
+        with:
+          version: 8
+
+      - name: Setup Rust
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Rust cache
+        uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: "./src-tauri -> target"
+          cache-on-failure: true
+
+      - name: Configure build environment
+        shell: pwsh
+        run: |
+          # 增量编译
+          echo "CARGO_INCREMENTAL=1" >> $env:GITHUB_ENV
+          # Rust 编译器并行代码生成
+          echo "RUSTFLAGS=-C codegen-units=16" >> $env:GITHUB_ENV
+          # 显示 CPU 信息
+          $cpuCount = (Get-CimInstance Win32_ComputerSystem).NumberOfLogicalProcessors
+          echo "Available CPU cores: $cpuCount"
+
+      - name: Install frontend dependencies
+        run: pnpm install
+
+      - name: Build frontend
+        run: pnpm build
+
+      - name: Verify dist folder exists
+        shell: pwsh
+        run: |
+          if (Test-Path "dist") {
+            echo "dist folder exists"
+            Get-ChildItem dist -Recurse | Select-Object FullName
+          } else {
+            echo "ERROR: dist folder not found!"
+            exit 1
+          }
+
+      - name: Build Tauri app (Windows portable exe)
+        run: pnpm tauri build -- --no-bundle
+
+      - name: Rename executable
+        shell: pwsh
+        run: |
+          $version = "${{ steps.version.outputs.VERSION }}"
+          Move-Item "src-tauri/target/release/config-guardian.exe" "Config-Guardian-$version.exe"
+
+      - name: Upload portable exe
+        uses: actions/upload-artifact@v4
+        with:
+          name: Config-Guardian-Windows-Portable
+          path: "Config-Guardian-*.exe"
+          retention-days: 30
+
+  release:
+    needs: build-windows
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Download artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: Config-Guardian-Windows-Portable
+
+      - name: Create Release
+        uses: softprops/action-gh-release@v1
+        with:
+          tag_name: v0.1.${{ github.run_number }}
+          name: Config Guardian v0.1.${{ github.run_number }}
+          files: "Config-Guardian-*.exe"
+          draft: false
+          prerelease: false
+          generate_release_notes: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

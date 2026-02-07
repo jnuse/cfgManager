@@ -1,0 +1,21 @@
+<svg width="512" height="512" viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg">
+  <!-- Background -->
+  <rect width="512" height="512" rx="80" fill="#2563eb"/>
+
+  <!-- Shield outline -->
+  <path d="M256 80 L160 120 L160 240 Q160 340 256 420 Q352 340 352 240 L352 120 Z"
+        fill="none" stroke="#ffffff" stroke-width="16" stroke-linejoin="round"/>
+
+  <!-- Document icon inside shield -->
+  <rect x="210" y="180" width="92" height="120" rx="8" fill="#ffffff"/>
+
+  <!-- Document lines -->
+  <line x1="230" y1="210" x2="282" y2="210" stroke="#2563eb" stroke-width="4" stroke-linecap="round"/>
+  <line x1="230" y1="235" x2="282" y2="235" stroke="#2563eb" stroke-width="4" stroke-linecap="round"/>
+  <line x1="230" y1="260" x2="270" y2="260" stroke="#2563eb" stroke-width="4" stroke-linecap="round"/>
+
+  <!-- Lock icon overlay -->
+  <circle cx="256" cy="320" r="20" fill="#fbbf24"/>
+  <rect x="246" y="315" width="20" height="25" rx="3" fill="#fbbf24"/>
+  <circle cx="256" cy="327" r="4" fill="#2563eb"/>
+</svg>
