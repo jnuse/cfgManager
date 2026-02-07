@@ -1,4 +1,4 @@
-use sqlx::{sqlite::SqlitePool, Row};
+use sqlx::sqlite::SqlitePool;
 use crate::models::{Config, CreateConfig};
 
 pub async fn init_db(workspace_root: &str) -> Result<SqlitePool, sqlx::Error> {

@@ -1,6 +1,5 @@
 use serde_json::Value as JsonValue;
 use serde_yaml::Value as YamlValue;
-use std::collections::BTreeMap;
 
 #[derive(Debug)]
 pub enum SanitizerError {
@@ -114,7 +113,7 @@ fn sanitize_toml(content: &str) -> Result<String, SanitizerError> {
 fn sanitize_toml_value(value: &toml::Value) -> toml::Value {
     match value {
         toml::Value::Table(map) => {
-            let mut sanitized_map = BTreeMap::new();
+            let mut sanitized_map = toml::map::Map::new();
             for (key, val) in map {
                 sanitized_map.insert(key.clone(), sanitize_toml_value(val));
             }
