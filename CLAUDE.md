@@ -21,7 +21,7 @@
 - **Tailwind CSS 3.4.1** - CSS 框架
 
 ### 构建工具
-- **pnpm** - 包管理器
+- **npm** - 包管理器
 - **Tauri CLI 2** - Tauri 命令行工具
 - **GitHub Actions** - CI/CD
 

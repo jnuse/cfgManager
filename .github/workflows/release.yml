@@ -35,11 +35,7 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: "20"
-
-      - name: Setup pnpm
-        uses: pnpm/action-setup@v3
-        with:
-          version: 8
+          cache: "npm"
 
       - name: Setup Rust
         uses: dtolnay/rust-toolchain@stable
@@ -62,10 +58,10 @@ jobs:
           echo "Available CPU cores: $cpuCount"
 
       - name: Install frontend dependencies
-        run: pnpm install
+        run: npm ci
 
       - name: Build frontend
-        run: pnpm build
+        run: npm run build
 
       - name: Verify dist folder exists
         shell: pwsh
@@ -79,7 +75,7 @@ jobs:
           }
 
       - name: Build Tauri app (Windows portable exe)
-        run: pnpm run tauri build -- --no-bundle
+        run: npm run tauri build -- --no-bundle
 
       - name: Rename executable
         shell: pwsh
