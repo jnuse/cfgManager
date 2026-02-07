@@ -13,7 +13,6 @@ function ConfigList() {
   const configs = useConfigStore(state => state.configs);
   const selectedConfig = useConfigStore(state => state.selectedConfig);
   const setSelectedConfig = useConfigStore(state => state.setSelectedConfig);
-  const setConfigs = useConfigStore(state => state.setConfigs);
   const removeConfig = useConfigStore(state => state.removeConfig);
 
   const handleSelectConfig = async (config: Config) => {

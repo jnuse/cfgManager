@@ -16,7 +16,6 @@ interface Config {
 function Dashboard() {
   const workspaceRoot = useConfigStore(state => state.workspaceRoot);
   const setConfigs = useConfigStore(state => state.setConfigs);
-  const addConfig = useConfigStore(state => state.addConfig);
   const [showAddDialog, setShowAddDialog] = useState(false);
   const [newConfigName, setNewConfigName] = useState('');
   const [newConfigPath, setNewConfigPath] = useState('');
@@ -59,7 +58,7 @@ function Dashboard() {
     }
 
     try {
-      const id: number = await invoke('add_config', {
+      await invoke('add_config', {
         name: newConfigName,
         relativePath: newConfigPath,
       });
