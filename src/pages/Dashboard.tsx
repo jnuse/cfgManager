@@ -5,6 +5,14 @@ import ConfigList from '../components/ConfigList';
 import TabbedEditor from '../components/TabbedEditor';
 import useConfigStore from '../stores/configStore';
 
+interface Config {
+  id: number;
+  name: string;
+  path: string;
+  original_content: string;
+  sanitized_content: string | null;
+}
+
 function Dashboard() {
   const workspaceRoot = useConfigStore(state => state.workspaceRoot);
   const setConfigs = useConfigStore(state => state.setConfigs);
@@ -19,7 +27,7 @@ function Dashboard() {
 
   const loadConfigs = async () => {
     try {
-      const configs = await invoke('get_all_configs');
+      const configs: Config[] = await invoke('get_all_configs');
       setConfigs(configs);
     } catch (err) {
       console.error('Failed to load configs:', err);
@@ -34,9 +42,9 @@ function Dashboard() {
         title: 'Select Configuration File',
       });
 
-      if (selected) {
+      if (selected && workspaceRoot) {
         // Calculate relative path
-        const relativePath = selected.replace(workspaceRoot + '\\', '').replace(workspaceRoot + '/', '');
+        const relativePath = (selected as string).replace(workspaceRoot + '\\', '').replace(workspaceRoot + '/', '');
         setNewConfigPath(relativePath);
       }
     } catch (err) {
@@ -51,7 +59,7 @@ function Dashboard() {
     }
 
     try {
-      const id = await invoke('add_config', {
+      const id: number = await invoke('add_config', {
         name: newConfigName,
         relativePath: newConfigPath,
       });

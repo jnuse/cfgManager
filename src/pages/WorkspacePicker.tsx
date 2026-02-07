@@ -3,10 +3,14 @@ import { invoke } from '@tauri-apps/api/core';
 import { open } from '@tauri-apps/plugin-dialog';
 import useConfigStore from '../stores/configStore';
 
-function WorkspacePicker({ onWorkspaceSelected }) {
+interface WorkspacePickerProps {
+  onWorkspaceSelected: (root: string) => void;
+}
+
+function WorkspacePicker({ onWorkspaceSelected }: WorkspacePickerProps) {
   const [selectedPath, setSelectedPath] = useState('');
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState(null);
+  const [error, setError] = useState<string | null>(null);
   const setWorkspaceRoot = useConfigStore(state => state.setWorkspaceRoot);
 
   const handleSelectDirectory = async () => {
@@ -18,7 +22,7 @@ function WorkspacePicker({ onWorkspaceSelected }) {
       });
 
       if (selected) {
-        setSelectedPath(selected);
+        setSelectedPath(selected as string);
         setError(null);
       }
     } catch (err) {

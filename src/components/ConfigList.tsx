@@ -1,6 +1,14 @@
 import { invoke } from '@tauri-apps/api/core';
 import useConfigStore from '../stores/configStore';
 
+interface Config {
+  id: number;
+  name: string;
+  path: string;
+  original_content: string;
+  sanitized_content: string | null;
+}
+
 function ConfigList() {
   const configs = useConfigStore(state => state.configs);
   const selectedConfig = useConfigStore(state => state.selectedConfig);
@@ -8,12 +16,12 @@ function ConfigList() {
   const setConfigs = useConfigStore(state => state.setConfigs);
   const removeConfig = useConfigStore(state => state.removeConfig);
 
-  const handleSelectConfig = async (config) => {
+  const handleSelectConfig = async (config: Config) => {
     setSelectedConfig(config);
 
     // Check for external changes
     try {
-      const status = await invoke('check_file_status', { id: config.id });
+      const status: any = await invoke('check_file_status', { id: config.id });
       if (status.has_external_changes) {
         // Show merge view or notification
         console.log('File has external changes');
@@ -23,7 +31,7 @@ function ConfigList() {
     }
   };
 
-  const handleDeleteConfig = async (id, e) => {
+  const handleDeleteConfig = async (id: number, e: React.MouseEvent) => {
     e.stopPropagation();
 
     if (!confirm('Are you sure you want to delete this configuration?')) {

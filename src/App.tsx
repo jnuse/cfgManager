@@ -1,4 +1,3 @@
-import { useState } from "react";
 import WorkspacePicker from "./pages/WorkspacePicker";
 import Dashboard from "./pages/Dashboard";
 import useConfigStore from "./stores/configStore";

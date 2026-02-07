@@ -1,11 +1,42 @@
 import { create } from 'zustand';
 
-const useConfigStore = create((set) => ({
-  // Workspace
+interface Config {
+  id: number;
+  name: string;
+  path: string;
+  original_content: string;
+  sanitized_content: string | null;
+}
+
+interface ConfigStore {
+  workspaceRoot: string | null;
+  setWorkspaceRoot: (root: string) => void;
+  configs: Config[];
+  setConfigs: (configs: Config[]) => void;
+  addConfig: (config: Config) => void;
+  removeConfig: (id: number) => void;
+  updateConfig: (id: number, updates: Partial<Config>) => void;
+  selectedConfig: Config | null;
+  setSelectedConfig: (config: Config | null) => void;
+  originalContent: string;
+  sanitizedContent: string;
+  setOriginalContent: (content: string) => void;
+  setSanitizedContent: (content: string) => void;
+  activeTab: 'original' | 'sanitized';
+  setActiveTab: (tab: 'original' | 'sanitized') => void;
+  showMergeView: boolean;
+  mergeData: any;
+  setShowMergeView: (show: boolean) => void;
+  setMergeData: (data: any) => void;
+  loading: boolean;
+  setLoading: (loading: boolean) => void;
+  error: string | null;
+  setError: (error: string | null) => void;
+}
+
+const useConfigStore = create<ConfigStore>((set) => ({
   workspaceRoot: null,
   setWorkspaceRoot: (root) => set({ workspaceRoot: root }),
-
-  // Configs
   configs: [],
   setConfigs: (configs) => set({ configs }),
   addConfig: (config) => set((state) => ({ configs: [config, ...state.configs] })),
@@ -15,28 +46,18 @@ const useConfigStore = create((set) => ({
   updateConfig: (id, updates) => set((state) => ({
     configs: state.configs.map(c => c.id === id ? { ...c, ...updates } : c)
   })),
-
-  // Selected config
   selectedConfig: null,
   setSelectedConfig: (config) => set({ selectedConfig: config }),
-
-  // Editor state
   originalContent: '',
   sanitizedContent: '',
   setOriginalContent: (content) => set({ originalContent: content }),
   setSanitizedContent: (content) => set({ sanitizedContent: content }),
-
-  // UI state
-  activeTab: 'original', // 'original' | 'sanitized'
+  activeTab: 'original',
   setActiveTab: (tab) => set({ activeTab: tab }),
-
-  // Merge state
   showMergeView: false,
   mergeData: null,
   setShowMergeView: (show) => set({ showMergeView: show }),
   setMergeData: (data) => set({ mergeData: data }),
-
-  // Loading states
   loading: false,
   setLoading: (loading) => set({ loading }),
   error: null,

@@ -25,7 +25,7 @@ function TabbedEditor() {
       setOriginalContent(selectedConfig.original_content);
 
       // Load sanitized preview
-      const sanitized = await invoke('get_sanitized_preview', { id: selectedConfig.id });
+      const sanitized: string = await invoke('get_sanitized_preview', { id: selectedConfig.id });
       setSanitizedContent(sanitized);
     } catch (err) {
       console.error('Failed to load content:', err);
@@ -34,11 +34,11 @@ function TabbedEditor() {
     }
   };
 
-  const handleOriginalChange = (value) => {
+  const handleOriginalChange = (value: string | undefined) => {
     setOriginalContent(value || '');
   };
 
-  const handleSanitizedChange = (value) => {
+  const handleSanitizedChange = (value: string | undefined) => {
     setSanitizedContent(value || '');
   };
 
@@ -98,8 +98,8 @@ function TabbedEditor() {
 
   const getLanguage = () => {
     if (!selectedConfig) return 'plaintext';
-    const ext = selectedConfig.path.split('.').pop().toLowerCase();
-    const langMap = {
+    const ext = selectedConfig.path.split('.').pop()?.toLowerCase() || '';
+    const langMap: Record<string, string> = {
       'json': 'json',
       'yaml': 'yaml',
       'yml': 'yaml',
