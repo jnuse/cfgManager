@@ -50,9 +50,9 @@ function TabbedEditor() {
         id: selectedConfig.id,
         content: originalContent,
       });
-      alert('Original content saved');
+      alert('原始内容已保存');
     } catch (err) {
-      alert('Failed to save: ' + err);
+      alert('保存失败: ' + err);
     }
   };
 
@@ -64,35 +64,35 @@ function TabbedEditor() {
         id: selectedConfig.id,
         content: sanitizedContent,
       });
-      alert('Sanitized content saved');
+      alert('脱敏内容已保存');
     } catch (err) {
-      alert('Failed to save: ' + err);
+      alert('保存失败: ' + err);
     }
   };
 
   const handleWriteDirect = async () => {
     if (!selectedConfig) return;
 
-    if (!confirm('Write original content to file?')) return;
+    if (!confirm('确定将原始内容写入文件吗？')) return;
 
     try {
       await invoke('write_to_file_direct', { id: selectedConfig.id });
-      alert('File written successfully');
+      alert('文件写入成功');
     } catch (err) {
-      alert('Failed to write file: ' + err);
+      alert('写入文件失败: ' + err);
     }
   };
 
   const handleWriteSanitized = async () => {
     if (!selectedConfig) return;
 
-    if (!confirm('Write sanitized content to file?')) return;
+    if (!confirm('确定将脱敏内容写入文件吗？')) return;
 
     try {
       await invoke('write_to_file_sanitized', { id: selectedConfig.id });
-      alert('Sanitized file written successfully');
+      alert('脱敏文件写入成功');
     } catch (err) {
-      alert('Failed to write file: ' + err);
+      alert('写入文件失败: ' + err);
     }
   };
 
@@ -116,7 +116,7 @@ function TabbedEditor() {
   if (!selectedConfig) {
     return (
       <div className="flex-1 flex items-center justify-center bg-white">
-        <p className="text-gray-500">Select a configuration to edit</p>
+        <p className="text-gray-500">请选择一个配置进行编辑</p>
       </div>
     );
   }
@@ -124,7 +124,7 @@ function TabbedEditor() {
   if (loading) {
     return (
       <div className="flex-1 flex items-center justify-center bg-white">
-        <p className="text-gray-500">Loading...</p>
+        <p className="text-gray-500">加载中...</p>
       </div>
     );
   }
@@ -141,7 +141,7 @@ function TabbedEditor() {
               : 'text-gray-600 hover:text-gray-800'
           }`}
         >
-          Original
+          原始
         </button>
         <button
           onClick={() => setActiveTab('sanitized')}
@@ -151,7 +151,7 @@ function TabbedEditor() {
               : 'text-gray-600 hover:text-gray-800'
           }`}
         >
-          Sanitized
+          脱敏
         </button>
       </div>
 
@@ -192,13 +192,13 @@ function TabbedEditor() {
               onClick={handleSaveOriginal}
               className="px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded"
             >
-              Save to DB
+              保存到数据库
             </button>
             <button
               onClick={handleWriteDirect}
               className="px-4 py-2 bg-green-500 hover:bg-green-600 text-white rounded"
             >
-              Write to File
+              写入文件
             </button>
           </>
         ) : (
@@ -207,13 +207,13 @@ function TabbedEditor() {
               onClick={handleSaveSanitized}
               className="px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded"
             >
-              Save Manual Sanitized
+              保存手动脱敏
             </button>
             <button
               onClick={handleWriteSanitized}
               className="px-4 py-2 bg-green-500 hover:bg-green-600 text-white rounded"
             >
-              Write Sanitized to File
+              写入脱敏文件
             </button>
           </>
         )}

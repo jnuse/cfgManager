@@ -18,7 +18,7 @@ function WorkspacePicker({ onWorkspaceSelected }: WorkspacePickerProps) {
       const selected = await open({
         directory: true,
         multiple: false,
-        title: 'Select Workspace Directory',
+        title: '选择工作区目录',
       });
 
       if (selected) {
@@ -26,13 +26,13 @@ function WorkspacePicker({ onWorkspaceSelected }: WorkspacePickerProps) {
         setError(null);
       }
     } catch (err) {
-      setError('Failed to select directory: ' + err);
+      setError('选择目录失败: ' + err);
     }
   };
 
   const handleInitWorkspace = async () => {
     if (!selectedPath) {
-      setError('Please select a directory first');
+      setError('请先选择一个目录');
       return;
     }
 
@@ -44,7 +44,7 @@ function WorkspacePicker({ onWorkspaceSelected }: WorkspacePickerProps) {
       setWorkspaceRoot(selectedPath);
       onWorkspaceSelected(selectedPath);
     } catch (err) {
-      setError('Failed to initialize workspace: ' + err);
+      setError('初始化工作区失败: ' + err);
     } finally {
       setLoading(false);
     }
@@ -53,9 +53,9 @@ function WorkspacePicker({ onWorkspaceSelected }: WorkspacePickerProps) {
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-100">
       <div className="bg-white p-8 rounded-lg shadow-lg max-w-md w-full">
-        <h1 className="text-2xl font-bold mb-6 text-center">Config Guardian</h1>
+        <h1 className="text-2xl font-bold mb-6 text-center">配置守护者</h1>
         <p className="text-gray-600 mb-6 text-center">
-          Select a workspace directory to manage your configuration files
+          选择一个工作区目录来管理你的配置文件
         </p>
 
         <div className="space-y-4">
@@ -63,12 +63,12 @@ function WorkspacePicker({ onWorkspaceSelected }: WorkspacePickerProps) {
             onClick={handleSelectDirectory}
             className="w-full bg-blue-500 hover:bg-blue-600 text-white font-medium py-2 px-4 rounded transition"
           >
-            Select Workspace Directory
+            选择工作区目录
           </button>
 
           {selectedPath && (
             <div className="p-3 bg-gray-50 rounded border border-gray-200">
-              <p className="text-sm text-gray-600 mb-1">Selected:</p>
+              <p className="text-sm text-gray-600 mb-1">已选择:</p>
               <p className="text-sm font-mono break-all">{selectedPath}</p>
             </div>
           )}
@@ -84,7 +84,7 @@ function WorkspacePicker({ onWorkspaceSelected }: WorkspacePickerProps) {
             disabled={!selectedPath || loading}
             className="w-full bg-green-500 hover:bg-green-600 disabled:bg-gray-300 disabled:cursor-not-allowed text-white font-medium py-2 px-4 rounded transition"
           >
-            {loading ? 'Initializing...' : 'Initialize Workspace'}
+            {loading ? '初始化中...' : '初始化工作区'}
           </button>
         </div>
       </div>

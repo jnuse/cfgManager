@@ -38,7 +38,7 @@ function Dashboard() {
       const selected = await open({
         directory: false,
         multiple: false,
-        title: 'Select Configuration File',
+        title: '选择配置文件',
       });
 
       if (selected && workspaceRoot) {
@@ -47,13 +47,13 @@ function Dashboard() {
         setNewConfigPath(relativePath);
       }
     } catch (err) {
-      alert('Failed to select file: ' + err);
+      alert('选择文件失败: ' + err);
     }
   };
 
   const handleAddConfig = async () => {
     if (!newConfigName || !newConfigPath) {
-      alert('Please provide both name and path');
+      alert('请填写名称和路径');
       return;
     }
 
@@ -71,7 +71,7 @@ function Dashboard() {
       setNewConfigPath('');
       setShowAddDialog(false);
     } catch (err) {
-      alert('Failed to add config: ' + err);
+      alert('添加配置失败: ' + err);
     }
   };
 
@@ -80,14 +80,14 @@ function Dashboard() {
       {/* Header */}
       <div className="bg-gray-800 text-white p-4 flex justify-between items-center">
         <div>
-          <h1 className="text-xl font-bold">Config Guardian</h1>
+          <h1 className="text-xl font-bold">配置守护者</h1>
           <p className="text-sm text-gray-300">{workspaceRoot}</p>
         </div>
         <button
           onClick={() => setShowAddDialog(true)}
           className="px-4 py-2 bg-blue-500 hover:bg-blue-600 rounded"
         >
-          Add Config
+          添加配置
         </button>
       </div>
 
@@ -101,35 +101,35 @@ function Dashboard() {
       {showAddDialog && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center">
           <div className="bg-white p-6 rounded-lg shadow-xl max-w-md w-full">
-            <h2 className="text-xl font-bold mb-4">Add Configuration</h2>
+            <h2 className="text-xl font-bold mb-4">添加配置</h2>
 
             <div className="space-y-4">
               <div>
-                <label className="block text-sm font-medium mb-1">Name</label>
+                <label className="block text-sm font-medium mb-1">名称</label>
                 <input
                   type="text"
                   value={newConfigName}
                   onChange={(e) => setNewConfigName(e.target.value)}
                   className="w-full px-3 py-2 border border-gray-300 rounded"
-                  placeholder="e.g., Production Config"
+                  placeholder="例如: 生产环境配置"
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium mb-1">Relative Path</label>
+                <label className="block text-sm font-medium mb-1">相对路径</label>
                 <div className="flex gap-2">
                   <input
                     type="text"
                     value={newConfigPath}
                     onChange={(e) => setNewConfigPath(e.target.value)}
                     className="flex-1 px-3 py-2 border border-gray-300 rounded"
-                    placeholder="e.g., config/app.json"
+                    placeholder="例如: config/app.json"
                   />
                   <button
                     onClick={handleSelectFile}
                     className="px-3 py-2 bg-gray-200 hover:bg-gray-300 rounded"
                   >
-                    Browse
+                    浏览
                   </button>
                 </div>
               </div>
@@ -139,13 +139,13 @@ function Dashboard() {
                   onClick={() => setShowAddDialog(false)}
                   className="px-4 py-2 bg-gray-200 hover:bg-gray-300 rounded"
                 >
-                  Cancel
+                  取消
                 </button>
                 <button
                   onClick={handleAddConfig}
                   className="px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded"
                 >
-                  Add
+                  添加
                 </button>
               </div>
             </div>

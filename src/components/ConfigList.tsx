@@ -33,7 +33,7 @@ function ConfigList() {
   const handleDeleteConfig = async (id: number, e: React.MouseEvent) => {
     e.stopPropagation();
 
-    if (!confirm('Are you sure you want to delete this configuration?')) {
+    if (!confirm('确定要删除这个配置吗？')) {
       return;
     }
 
@@ -44,17 +44,17 @@ function ConfigList() {
         setSelectedConfig(null);
       }
     } catch (err) {
-      alert('Failed to delete config: ' + err);
+      alert('删除配置失败: ' + err);
     }
   };
 
   return (
     <div className="w-64 bg-gray-50 border-r border-gray-200 overflow-y-auto">
       <div className="p-4">
-        <h2 className="text-lg font-semibold mb-4">Configurations</h2>
+        <h2 className="text-lg font-semibold mb-4">配置列表</h2>
 
         {configs.length === 0 ? (
-          <p className="text-sm text-gray-500">No configurations yet</p>
+          <p className="text-sm text-gray-500">暂无配置</p>
         ) : (
           <div className="space-y-2">
             {configs.map(config => (
