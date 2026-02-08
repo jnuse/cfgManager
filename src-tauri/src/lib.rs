@@ -7,20 +7,30 @@ mod commands;
 
 use std::sync::Mutex;
 use commands::AppState;
+use tauri::Manager;
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
-    let app_state = AppState {
-        pool: Mutex::new(None),
-        workspace_root: Mutex::new(None),
-    };
-
     tauri::Builder::default()
         .plugin(tauri_plugin_opener::init())
         .plugin(tauri_plugin_dialog::init())
-        .manage(app_state)
+        .setup(|app| {
+            let app_data_dir = app.path().app_data_dir()?;
+            std::fs::create_dir_all(&app_data_dir)?;
+
+            let pool = tauri::async_runtime::block_on(db::init_db(&app_data_dir))
+                .expect("Failed to initialize database");
+
+            let app_state = AppState {
+                pool: Mutex::new(Some(pool)),
+            };
+            app.manage(app_state);
+            Ok(())
+        })
         .invoke_handler(tauri::generate_handler![
-            commands::init_workspace,
+            commands::add_workspace,
+            commands::get_all_workspaces,
+            commands::delete_workspace,
             commands::add_config,
             commands::get_all_configs,
             commands::get_config_by_id,
