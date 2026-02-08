@@ -26,8 +26,19 @@ serde_json = "1"
 serde_yaml = "0.9"
 toml = "0.8"
 dotenvy = "0.15"
-tokio = { version = "1", features = ["full"] }
+tokio = { version = "1", features = ["rt-multi-thread", "macros"] }
 sqlx = { version = "0.7", features = ["runtime-tokio-rustls", "sqlite"] }
 sha2 = "0.10"
 hex = "0.4"
 
+[profile.release]
+# 全程序链接时优化，跨 crate 消除死代码
+lto = true
+# 单代码生成单元，最大化优化机会（编译慢但体积小）
+codegen-units = 1
+# 体积优化，同时保留足够的性能优化
+opt-level = "s"
+# 剥离调试符号
+strip = "symbols"
+# panic 直接 abort，省掉 unwind 表
+panic = "abort"
