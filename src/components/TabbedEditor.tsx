@@ -93,9 +93,11 @@ function TabbedEditor() {
     if (!selectedConfig) return 'plaintext';
     const ext = selectedConfig.path.split('.').pop()?.toLowerCase() || '';
     const langMap: Record<string, string> = {
-      json: 'json', yaml: 'yaml', yml: 'yaml', toml: 'toml',
-      env: 'shell', js: 'javascript', ts: 'typescript',
+      json: 'json', yaml: 'yaml', yml: 'yaml',
+      toml: 'ini', ini: 'ini', env: 'ini', properties: 'ini',
+      js: 'javascript', ts: 'typescript',
       jsx: 'javascript', tsx: 'typescript',
+      html: 'html', css: 'css', xml: 'xml',
     };
     return langMap[ext] || 'plaintext';
   };
