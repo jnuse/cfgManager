@@ -1,6 +1,7 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { invoke } from '@tauri-apps/api/core';
 import Editor from '@monaco-editor/react';
+import type * as Monaco from 'monaco-editor';
 import useConfigStore from '../stores/configStore';
 
 function TabbedEditor() {
@@ -17,6 +18,11 @@ function TabbedEditor() {
   const isSplit = editorLayout === 'split';
   const [sanitizedContent, setSanitizedContent] = useState('');
   const [loading, setLoading] = useState(false);
+
+  // 编辑器实例引用（用于滚动同步）
+  const originalEditorRef = useRef<Monaco.editor.IStandaloneCodeEditor | null>(null);
+  const sanitizedEditorRef = useRef<Monaco.editor.IStandaloneCodeEditor | null>(null);
+  const isSyncingScroll = useRef(false);
 
   const getWorkspaceRoot = (): string | null => {
     if (!selectedConfig) return null;
@@ -69,6 +75,8 @@ function TabbedEditor() {
     if (!root) { alert('找不到所属工作区'); return; }
     if (!confirm('确定将原始内容写入文件吗？')) return;
     try {
+      // 先将编辑器当前内容保存到数据库，再写入文件
+      await invoke('update_original_content', { id: selectedConfig.id, content: originalContent });
       await invoke('write_to_file_direct', { id: selectedConfig.id, workspaceRoot: root });
       alert('文件写入成功');
     } catch (err) {
@@ -82,12 +90,64 @@ function TabbedEditor() {
     if (!root) { alert('找不到所属工作区'); return; }
     if (!confirm('确定将脱敏内容写入文件吗？')) return;
     try {
+      // 先将编辑器当前脱敏内容保存到数据库，再写入文件
+      await invoke('update_sanitized_content', { id: selectedConfig.id, content: sanitizedContent });
       await invoke('write_to_file_sanitized', { id: selectedConfig.id, workspaceRoot: root });
       alert('脱敏文件写入成功');
     } catch (err) {
       alert('写入文件失败: ' + err);
     }
   };
+
+  // 滚动同步：编辑器挂载时绑定监听
+  const scrollDisposers = useRef<Monaco.IDisposable[]>([]);
+
+  const setupScrollSync = () => {
+    // 清理旧的监听器
+    scrollDisposers.current.forEach(d => d.dispose());
+    scrollDisposers.current = [];
+
+    const a = originalEditorRef.current;
+    const b = sanitizedEditorRef.current;
+    if (!a || !b) return;
+
+    scrollDisposers.current.push(
+      a.onDidScrollChange((e) => {
+        if (isSyncingScroll.current) return;
+        isSyncingScroll.current = true;
+        b.setScrollTop(e.scrollTop);
+        b.setScrollLeft(e.scrollLeft);
+        isSyncingScroll.current = false;
+      }),
+      b.onDidScrollChange((e) => {
+        if (isSyncingScroll.current) return;
+        isSyncingScroll.current = true;
+        a.setScrollTop(e.scrollTop);
+        a.setScrollLeft(e.scrollLeft);
+        isSyncingScroll.current = false;
+      })
+    );
+  };
+
+  const handleOriginalMount = (editor: Monaco.editor.IStandaloneCodeEditor) => {
+    originalEditorRef.current = editor;
+    setupScrollSync();
+  };
+
+  const handleSanitizedMount = (editor: Monaco.editor.IStandaloneCodeEditor) => {
+    sanitizedEditorRef.current = editor;
+    setupScrollSync();
+  };
+
+  // 切换配置或卸载时清理
+  useEffect(() => {
+    return () => {
+      scrollDisposers.current.forEach(d => d.dispose());
+      scrollDisposers.current = [];
+      originalEditorRef.current = null;
+      sanitizedEditorRef.current = null;
+    };
+  }, [selectedConfig]);
 
   const getLanguage = () => {
     if (!selectedConfig) return 'plaintext';
@@ -169,6 +229,7 @@ function TabbedEditor() {
                 language={getLanguage()}
                 value={originalContent}
                 onChange={v => setOriginalContent(v || '')}
+                onMount={handleOriginalMount}
                 theme={monacoTheme}
                 options={{ minimap: { enabled: false }, fontSize: 14 }}
               />
@@ -182,6 +243,7 @@ function TabbedEditor() {
                 language={getLanguage()}
                 value={sanitizedContent}
                 onChange={v => setSanitizedContent(v || '')}
+                onMount={handleSanitizedMount}
                 theme={monacoTheme}
                 options={{ minimap: { enabled: false }, fontSize: 14 }}
               />

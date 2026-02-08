@@ -10,6 +10,7 @@
 - **serde_json 1** - JSON 解析
 - **serde_yaml 0.9** - YAML 解析
 - **toml 0.8** - TOML 解析
+- **toml_edit 0.22** - TOML 格式保留解析（脱敏用，保留注释/顺序）
 - **dotenvy 0.15** - .env 文件解析
 - **sha2 0.10** - SHA256 哈希计算
 - **hex 0.4** - 十六进制编码
@@ -44,7 +45,7 @@ confManager/
 │   │   ├── models.rs           # 数据模型定义（Workspace, Config 等）
 │   │   ├── db.rs               # SQLite 数据库操作（多工作区）
 │   │   ├── file_system.rs      # 文件系统操作（路径验证、哈希计算）
-│   │   ├── sanitizer.rs        # 配置文件脱敏引擎
+│   │   ├── sanitizer.rs        # 配置文件脱敏引擎（toml_edit 保留格式）
 │   │   ├── merger.rs           # 冲突检测逻辑
 │   │   └── commands.rs         # Tauri 命令定义（15个命令）
 │   ├── icons/                  # 应用图标
