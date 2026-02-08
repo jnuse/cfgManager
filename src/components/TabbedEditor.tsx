@@ -8,11 +8,13 @@ function TabbedEditor() {
   const workspaces = useConfigStore(s => s.workspaces);
   const activeTab = useConfigStore(s => s.activeTab);
   const setActiveTab = useConfigStore(s => s.setActiveTab);
-  const theme = useConfigStore(s => s.theme);
+  const theme = useConfigStore(s => s.effectiveTheme);
+  const editorLayout = useConfigStore(s => s.editorLayout);
+  const setEditorLayout = useConfigStore(s => s.setEditorLayout);
   const [originalContent, setOriginalContent] = useState('');
 
-  const isDark = theme === 'dark' || (theme === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches);
-  const monacoTheme = isDark ? 'vs-dark' : 'vs-light';
+  const monacoTheme = theme === 'dark' ? 'vs-dark' : 'vs-light';
+  const isSplit = editorLayout === 'split';
   const [sanitizedContent, setSanitizedContent] = useState('');
   const [loading, setLoading] = useState(false);
 
@@ -115,60 +117,118 @@ function TabbedEditor() {
   }
   return (
     <div className="flex-1 flex flex-col bg-white dark:bg-gray-900">
-      {/* Tabs */}
+      {/* Toolbar */}
       <div className="flex border-b border-gray-200 dark:border-gray-700 flex-shrink-0">
-        <button
-          onClick={() => setActiveTab('original')}
-          className={`px-4 py-2 text-sm font-medium ${
-            activeTab === 'original'
-              ? 'border-b-2 border-blue-500 text-blue-600 dark:text-blue-400'
-              : 'text-gray-600 hover:text-gray-800 dark:text-gray-400 dark:hover:text-gray-200'
-          }`}
-        >
-          原始
-        </button>
-        <button
-          onClick={() => setActiveTab('sanitized')}
-          className={`px-4 py-2 text-sm font-medium ${
-            activeTab === 'sanitized'
-              ? 'border-b-2 border-blue-500 text-blue-600 dark:text-blue-400'
-              : 'text-gray-600 hover:text-gray-800 dark:text-gray-400 dark:hover:text-gray-200'
-          }`}
-        >
-          脱敏
-        </button>
+        {!isSplit && (
+          <>
+            <button
+              onClick={() => setActiveTab('original')}
+              className={`px-4 py-2 text-sm font-medium ${
+                activeTab === 'original'
+                  ? 'border-b-2 border-blue-500 text-blue-600 dark:text-blue-400'
+                  : 'text-gray-600 hover:text-gray-800 dark:text-gray-400 dark:hover:text-gray-200'
+              }`}
+            >
+              原始
+            </button>
+            <button
+              onClick={() => setActiveTab('sanitized')}
+              className={`px-4 py-2 text-sm font-medium ${
+                activeTab === 'sanitized'
+                  ? 'border-b-2 border-blue-500 text-blue-600 dark:text-blue-400'
+                  : 'text-gray-600 hover:text-gray-800 dark:text-gray-400 dark:hover:text-gray-200'
+              }`}
+            >
+              脱敏
+            </button>
+          </>
+        )}
         <div className="flex-1" />
         <span className="px-3 py-2 text-xs text-gray-400 dark:text-gray-500 self-center truncate max-w-xs" title={selectedConfig.path}>
           {selectedConfig.path}
         </span>
+        <button
+          onClick={() => setEditorLayout(isSplit ? 'tab' : 'split')}
+          className="px-3 py-2 text-xs text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 self-center"
+          title={isSplit ? '切换为标签页模式' : '切换为分栏模式'}
+        >
+          {isSplit ? '标签页' : '分栏'}
+        </button>
       </div>
 
       {/* Editor */}
-      <div className="flex-1">
-        {activeTab === 'original' ? (
-          <Editor
-            height="100%"
-            language={getLanguage()}
-            value={originalContent}
-            onChange={v => setOriginalContent(v || '')}
-            theme={monacoTheme}
-            options={{ minimap: { enabled: false }, fontSize: 14 }}
-          />
-        ) : (
-          <Editor
-            height="100%"
-            language={getLanguage()}
-            value={sanitizedContent}
-            onChange={v => setSanitizedContent(v || '')}
-            theme={monacoTheme}
-            options={{ minimap: { enabled: false }, fontSize: 14 }}
-          />
-        )}
-      </div>
+      {isSplit ? (
+        <div className="flex-1 flex">
+          <div className="flex-1 flex flex-col border-r border-gray-200 dark:border-gray-700">
+            <div className="px-3 py-1 text-xs text-gray-500 dark:text-gray-400 border-b border-gray-200 dark:border-gray-700 flex-shrink-0">原始</div>
+            <div className="flex-1">
+              <Editor
+                height="100%"
+                language={getLanguage()}
+                value={originalContent}
+                onChange={v => setOriginalContent(v || '')}
+                theme={monacoTheme}
+                options={{ minimap: { enabled: false }, fontSize: 14 }}
+              />
+            </div>
+          </div>
+          <div className="flex-1 flex flex-col">
+            <div className="px-3 py-1 text-xs text-gray-500 dark:text-gray-400 border-b border-gray-200 dark:border-gray-700 flex-shrink-0">脱敏</div>
+            <div className="flex-1">
+              <Editor
+                height="100%"
+                language={getLanguage()}
+                value={sanitizedContent}
+                onChange={v => setSanitizedContent(v || '')}
+                theme={monacoTheme}
+                options={{ minimap: { enabled: false }, fontSize: 14 }}
+              />
+            </div>
+          </div>
+        </div>
+      ) : (
+        <div className="flex-1">
+          {activeTab === 'original' ? (
+            <Editor
+              height="100%"
+              language={getLanguage()}
+              value={originalContent}
+              onChange={v => setOriginalContent(v || '')}
+              theme={monacoTheme}
+              options={{ minimap: { enabled: false }, fontSize: 14 }}
+            />
+          ) : (
+            <Editor
+              height="100%"
+              language={getLanguage()}
+              value={sanitizedContent}
+              onChange={v => setSanitizedContent(v || '')}
+              theme={monacoTheme}
+              options={{ minimap: { enabled: false }, fontSize: 14 }}
+            />
+          )}
+        </div>
+      )}
 
       {/* Action buttons */}
       <div className="px-4 py-2 border-t border-gray-200 dark:border-gray-700 flex gap-2 flex-shrink-0">
-        {activeTab === 'original' ? (
+        {isSplit ? (
+          <>
+            <button onClick={handleSaveOriginal} className="px-3 py-1.5 text-sm bg-blue-500 hover:bg-blue-600 text-white rounded">
+              保存原始
+            </button>
+            <button onClick={handleWriteDirect} className="px-3 py-1.5 text-sm bg-green-500 hover:bg-green-600 text-white rounded">
+              写入原始
+            </button>
+            <div className="w-px bg-gray-300 dark:bg-gray-600" />
+            <button onClick={handleSaveSanitized} className="px-3 py-1.5 text-sm bg-blue-500 hover:bg-blue-600 text-white rounded">
+              保存脱敏
+            </button>
+            <button onClick={handleWriteSanitized} className="px-3 py-1.5 text-sm bg-green-500 hover:bg-green-600 text-white rounded">
+              写入脱敏
+            </button>
+          </>
+        ) : activeTab === 'original' ? (
           <>
             <button onClick={handleSaveOriginal} className="px-3 py-1.5 text-sm bg-blue-500 hover:bg-blue-600 text-white rounded">
               保存到数据库

@@ -36,8 +36,14 @@ interface ConfigStore {
   activeTab: 'original' | 'sanitized';
   setActiveTab: (tab: 'original' | 'sanitized') => void;
 
+  editorLayout: 'tab' | 'split';
+  setEditorLayout: (layout: 'tab' | 'split') => void;
+
   theme: Theme;
   setTheme: (theme: Theme) => void;
+
+  effectiveTheme: 'light' | 'dark';
+  setEffectiveTheme: (theme: 'light' | 'dark') => void;
 }
 
 const useConfigStore = create<ConfigStore>((set) => ({
@@ -76,11 +82,20 @@ const useConfigStore = create<ConfigStore>((set) => ({
   activeTab: 'original',
   setActiveTab: (tab) => set({ activeTab: tab }),
 
+  editorLayout: (localStorage.getItem('editorLayout') as 'tab' | 'split') || 'tab',
+  setEditorLayout: (layout) => {
+    localStorage.setItem('editorLayout', layout);
+    set({ editorLayout: layout });
+  },
+
   theme: (localStorage.getItem('theme') as Theme) || 'system',
   setTheme: (theme) => {
     localStorage.setItem('theme', theme);
     set({ theme });
   },
+
+  effectiveTheme: 'light',
+  setEffectiveTheme: (effectiveTheme) => set({ effectiveTheme }),
 }));
 
 export default useConfigStore;

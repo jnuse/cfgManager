@@ -4,10 +4,12 @@ import useConfigStore from "./stores/configStore";
 
 function App() {
   const theme = useConfigStore(s => s.theme);
+  const setEffectiveTheme = useConfigStore(s => s.setEffectiveTheme);
 
   useEffect(() => {
     const apply = (dark: boolean) => {
       document.documentElement.classList.toggle('dark', dark);
+      setEffectiveTheme(dark ? 'dark' : 'light');
     };
 
     if (theme === 'dark') {

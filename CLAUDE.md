@@ -19,7 +19,7 @@
 - **TypeScript 5.8.3** - 类型系统
 - **Vite 7.0.4** - 构建工具
 - **Zustand 4.5.0** - 状态管理
-- **Monaco Editor 0.45.0** - 代码编辑器（本地加载，非 CDN）
+- **Monaco Editor 0.45.0** - 代码编辑器（本地加载，Worker 本地打包）
 - **@monaco-editor/react 4.6.0** - Monaco React 封装
 - **Tailwind CSS 3.4.1** - CSS 框架（darkMode: class）
 - **@tauri-apps/plugin-opener 2** - 前端文件资源管理器 API
@@ -56,15 +56,15 @@ confManager/
 ├── src/                        # React 前端
 │   ├── components/
 │   │   ├── WorkspaceTree.tsx   # 工作区树形导航（右键菜单）
-│   │   └── TabbedEditor.tsx    # 双视图编辑器（原始/脱敏）
+│   │   └── TabbedEditor.tsx    # 双视图编辑器（标签页/分栏模式，原始/脱敏）
 │   ├── pages/
 │   │   └── Dashboard.tsx       # 主界面（工作区/配置管理对话框）
 │   ├── stores/
-│   │   └── configStore.ts      # Zustand 状态管理（含主题持久化）
+│   │   └── configStore.ts      # Zustand 状态管理（含主题/布局持久化）
 │   ├── assets/                 # 静态资源
 │   ├── App.tsx                 # 根组件（主题切换逻辑）
 │   ├── App.css                 # 应用样式
-│   ├── main.tsx                # 前端入口（Monaco 本地加载）
+│   ├── main.tsx                # 前端入口（Monaco 本地加载 + Worker 配置）
 │   ├── index.css               # 全局样式（Tailwind + dark mode）
 │   └── vite-env.d.ts           # Vite 类型定义
 ├── public/                     # 公共资源
