@@ -47,7 +47,7 @@ confManager/
 │   │   ├── file_system.rs      # 文件系统操作（路径验证、哈希计算）
 │   │   ├── sanitizer.rs        # 配置文件脱敏引擎（toml_edit 保留格式）
 │   │   ├── merger.rs           # 冲突检测逻辑
-│   │   └── commands.rs         # Tauri 命令定义（15个命令）
+│   │   └── commands.rs         # Tauri 命令定义（15个命令，含不支持格式回退）
 │   ├── icons/                  # 应用图标
 │   ├── capabilities/
 │   │   └── default.json        # Tauri 权限配置
@@ -57,11 +57,11 @@ confManager/
 ├── src/                        # React 前端
 │   ├── components/
 │   │   ├── WorkspaceTree.tsx   # 工作区树形导航（右键菜单）
-│   │   └── TabbedEditor.tsx    # 双视图编辑器（标签页/分栏模式，原始/脱敏）
+│   │   └── TabbedEditor.tsx    # 双视图编辑器（标签页/分栏，自动保存，自动/手动脱敏切换）
 │   ├── pages/
 │   │   └── Dashboard.tsx       # 主界面（工作区/配置管理对话框）
 │   ├── stores/
-│   │   └── configStore.ts      # Zustand 状态管理（含主题/布局持久化）
+│   │   └── configStore.ts      # Zustand 状态管理（含主题/布局/自动脱敏持久化）
 │   ├── assets/                 # 静态资源
 │   ├── App.tsx                 # 根组件（主题切换逻辑）
 │   ├── App.css                 # 应用样式

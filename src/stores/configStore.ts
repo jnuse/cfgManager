@@ -39,6 +39,9 @@ interface ConfigStore {
   editorLayout: 'tab' | 'split';
   setEditorLayout: (layout: 'tab' | 'split') => void;
 
+  autoSanitize: boolean;
+  setAutoSanitize: (auto: boolean) => void;
+
   theme: Theme;
   setTheme: (theme: Theme) => void;
 
@@ -86,6 +89,12 @@ const useConfigStore = create<ConfigStore>((set) => ({
   setEditorLayout: (layout) => {
     localStorage.setItem('editorLayout', layout);
     set({ editorLayout: layout });
+  },
+
+  autoSanitize: localStorage.getItem('autoSanitize') !== 'false',
+  setAutoSanitize: (auto) => {
+    localStorage.setItem('autoSanitize', String(auto));
+    set({ autoSanitize: auto });
   },
 
   theme: (localStorage.getItem('theme') as Theme) || 'system',

@@ -202,8 +202,13 @@ pub async fn write_to_file_sanitized(
     let sanitized_content = if let Some(manual_content) = config.sanitized_content {
         manual_content
     } else {
-        sanitizer::sanitize_content(&config.original_content, &config.path)
-            .map_err(|e| format!("脱敏失败: {}", e))?
+        match sanitizer::sanitize_content(&config.original_content, &config.path) {
+            Ok(sanitized) => sanitized,
+            Err(crate::sanitizer::SanitizerError::UnsupportedFormat(_)) => {
+                config.original_content
+            }
+            Err(e) => return Err(format!("脱敏失败: {}", e)),
+        }
     };
 
     file_system::write_file(&workspace_root, &config.path, &sanitized_content)
@@ -235,6 +240,12 @@ pub async fn get_sanitized_preview(
         return Ok(manual_content);
     }
 
-    sanitizer::sanitize_content(&config.original_content, &config.path)
-        .map_err(|e| format!("脱敏失败: {}", e))
+    match sanitizer::sanitize_content(&config.original_content, &config.path) {
+        Ok(sanitized) => Ok(sanitized),
+        Err(crate::sanitizer::SanitizerError::UnsupportedFormat(_)) => {
+            // 不支持自动脱敏的格式，返回原始内容
+            Ok(config.original_content)
+        }
+        Err(e) => Err(format!("脱敏失败: {}", e)),
+    }
 }
