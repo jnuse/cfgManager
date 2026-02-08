@@ -1,5 +1,7 @@
 import { create } from 'zustand';
 
+export type Theme = 'light' | 'dark' | 'system';
+
 export interface Workspace {
   id: number;
   name: string;
@@ -33,6 +35,9 @@ interface ConfigStore {
 
   activeTab: 'original' | 'sanitized';
   setActiveTab: (tab: 'original' | 'sanitized') => void;
+
+  theme: Theme;
+  setTheme: (theme: Theme) => void;
 }
 
 const useConfigStore = create<ConfigStore>((set) => ({
@@ -70,6 +75,12 @@ const useConfigStore = create<ConfigStore>((set) => ({
 
   activeTab: 'original',
   setActiveTab: (tab) => set({ activeTab: tab }),
+
+  theme: (localStorage.getItem('theme') as Theme) || 'system',
+  setTheme: (theme) => {
+    localStorage.setItem('theme', theme);
+    set({ theme });
+  },
 }));
 
 export default useConfigStore;

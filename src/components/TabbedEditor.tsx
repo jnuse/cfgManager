@@ -8,7 +8,11 @@ function TabbedEditor() {
   const workspaces = useConfigStore(s => s.workspaces);
   const activeTab = useConfigStore(s => s.activeTab);
   const setActiveTab = useConfigStore(s => s.setActiveTab);
+  const theme = useConfigStore(s => s.theme);
   const [originalContent, setOriginalContent] = useState('');
+
+  const isDark = theme === 'dark' || (theme === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches);
+  const monacoTheme = isDark ? 'vs-dark' : 'vs-light';
   const [sanitizedContent, setSanitizedContent] = useState('');
   const [loading, setLoading] = useState(false);
 
@@ -96,29 +100,29 @@ function TabbedEditor() {
 
   if (!selectedConfig) {
     return (
-      <div className="flex-1 flex items-center justify-center bg-white">
-        <p className="text-gray-400">选择一个配置文件开始编辑</p>
+      <div className="flex-1 flex items-center justify-center bg-white dark:bg-gray-900">
+        <p className="text-gray-400 dark:text-gray-500">选择一个配置文件开始编辑</p>
       </div>
     );
   }
 
   if (loading) {
     return (
-      <div className="flex-1 flex items-center justify-center bg-white">
-        <p className="text-gray-400">加载中...</p>
+      <div className="flex-1 flex items-center justify-center bg-white dark:bg-gray-900">
+        <p className="text-gray-400 dark:text-gray-500">加载中...</p>
       </div>
     );
   }
   return (
-    <div className="flex-1 flex flex-col bg-white">
+    <div className="flex-1 flex flex-col bg-white dark:bg-gray-900">
       {/* Tabs */}
-      <div className="flex border-b border-gray-200 flex-shrink-0">
+      <div className="flex border-b border-gray-200 dark:border-gray-700 flex-shrink-0">
         <button
           onClick={() => setActiveTab('original')}
           className={`px-4 py-2 text-sm font-medium ${
             activeTab === 'original'
-              ? 'border-b-2 border-blue-500 text-blue-600'
-              : 'text-gray-600 hover:text-gray-800'
+              ? 'border-b-2 border-blue-500 text-blue-600 dark:text-blue-400'
+              : 'text-gray-600 hover:text-gray-800 dark:text-gray-400 dark:hover:text-gray-200'
           }`}
         >
           原始
@@ -127,14 +131,14 @@ function TabbedEditor() {
           onClick={() => setActiveTab('sanitized')}
           className={`px-4 py-2 text-sm font-medium ${
             activeTab === 'sanitized'
-              ? 'border-b-2 border-blue-500 text-blue-600'
-              : 'text-gray-600 hover:text-gray-800'
+              ? 'border-b-2 border-blue-500 text-blue-600 dark:text-blue-400'
+              : 'text-gray-600 hover:text-gray-800 dark:text-gray-400 dark:hover:text-gray-200'
           }`}
         >
           脱敏
         </button>
         <div className="flex-1" />
-        <span className="px-3 py-2 text-xs text-gray-400 self-center truncate max-w-xs" title={selectedConfig.path}>
+        <span className="px-3 py-2 text-xs text-gray-400 dark:text-gray-500 self-center truncate max-w-xs" title={selectedConfig.path}>
           {selectedConfig.path}
         </span>
       </div>
@@ -147,7 +151,7 @@ function TabbedEditor() {
             language={getLanguage()}
             value={originalContent}
             onChange={v => setOriginalContent(v || '')}
-            theme="vs-light"
+            theme={monacoTheme}
             options={{ minimap: { enabled: false }, fontSize: 14 }}
           />
         ) : (
@@ -156,14 +160,14 @@ function TabbedEditor() {
             language={getLanguage()}
             value={sanitizedContent}
             onChange={v => setSanitizedContent(v || '')}
-            theme="vs-light"
+            theme={monacoTheme}
             options={{ minimap: { enabled: false }, fontSize: 14 }}
           />
         )}
       </div>
 
       {/* Action buttons */}
-      <div className="px-4 py-2 border-t border-gray-200 flex gap-2 flex-shrink-0">
+      <div className="px-4 py-2 border-t border-gray-200 dark:border-gray-700 flex gap-2 flex-shrink-0">
         {activeTab === 'original' ? (
           <>
             <button onClick={handleSaveOriginal} className="px-3 py-1.5 text-sm bg-blue-500 hover:bg-blue-600 text-white rounded">

@@ -3,13 +3,22 @@ import { invoke } from '@tauri-apps/api/core';
 import { open } from '@tauri-apps/plugin-dialog';
 import WorkspaceTree from '../components/WorkspaceTree';
 import TabbedEditor from '../components/TabbedEditor';
-import useConfigStore, { Workspace, Config } from '../stores/configStore';
+import useConfigStore, { Workspace, Config, Theme } from '../stores/configStore';
 
 function Dashboard() {
   const workspaces = useConfigStore(s => s.workspaces);
   const setWorkspaces = useConfigStore(s => s.setWorkspaces);
   const addWorkspace = useConfigStore(s => s.addWorkspace);
   const setConfigs = useConfigStore(s => s.setConfigs);
+  const theme = useConfigStore(s => s.theme);
+  const setTheme = useConfigStore(s => s.setTheme);
+
+  const themeLabels: Record<Theme, string> = { light: '浅色', dark: '深色', system: '系统' };
+  const themeOrder: Theme[] = ['light', 'dark', 'system'];
+  const cycleTheme = () => {
+    const idx = themeOrder.indexOf(theme);
+    setTheme(themeOrder[(idx + 1) % themeOrder.length]);
+  };
 
   const [showAddWsDialog, setShowAddWsDialog] = useState(false);
   const [wsName, setWsName] = useState('');
@@ -123,9 +132,16 @@ function Dashboard() {
   return (
     <div className="h-screen flex flex-col">
       {/* Header */}
-      <div className="bg-gray-800 text-white px-4 py-3 flex justify-between items-center flex-shrink-0">
+      <div className="bg-gray-800 dark:bg-gray-950 text-white px-4 py-3 flex justify-between items-center flex-shrink-0">
         <h1 className="text-lg font-bold">配置守护者</h1>
-        <div className="flex gap-2">
+        <div className="flex gap-2 items-center">
+          <button
+            onClick={cycleTheme}
+            className="px-3 py-1.5 text-sm bg-gray-700 hover:bg-gray-600 rounded"
+            title="切换主题"
+          >
+            {themeLabels[theme]}
+          </button>
           <button
             onClick={() => setShowAddWsDialog(true)}
             className="px-3 py-1.5 text-sm bg-gray-600 hover:bg-gray-500 rounded"
@@ -157,32 +173,32 @@ function Dashboard() {
       {/* Add workspace dialog */}
       {showAddWsDialog && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white p-6 rounded-lg shadow-xl max-w-md w-full">
-            <h2 className="text-lg font-bold mb-4">添加工作区</h2>
+          <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-xl max-w-md w-full">
+            <h2 className="text-lg font-bold mb-4 dark:text-gray-100">添加工作区</h2>
             <div className="space-y-4">
               <div>
-                <label className="block text-sm font-medium mb-1">名称</label>
+                <label className="block text-sm font-medium mb-1 dark:text-gray-300">名称</label>
                 <input
                   type="text"
                   value={wsName}
                   onChange={e => setWsName(e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded"
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-700 dark:text-gray-100"
                   placeholder="例如: 我的项目"
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium mb-1">目录</label>
+                <label className="block text-sm font-medium mb-1 dark:text-gray-300">目录</label>
                 <div className="flex gap-2">
                   <input
                     type="text"
                     value={wsPath}
                     readOnly
-                    className="flex-1 px-3 py-2 border border-gray-300 rounded bg-gray-50"
+                    className="flex-1 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded bg-gray-50 dark:bg-gray-700 dark:text-gray-100"
                     placeholder="点击浏览选择目录"
                   />
                   <button
                     onClick={handleSelectWsDir}
-                    className="px-3 py-2 bg-gray-200 hover:bg-gray-300 rounded"
+                    className="px-3 py-2 bg-gray-200 hover:bg-gray-300 dark:bg-gray-600 dark:hover:bg-gray-500 rounded dark:text-gray-100"
                   >
                     浏览
                   </button>
@@ -191,7 +207,7 @@ function Dashboard() {
               <div className="flex gap-2 justify-end">
                 <button
                   onClick={() => { setShowAddWsDialog(false); setWsName(''); setWsPath(''); }}
-                  className="px-4 py-2 bg-gray-200 hover:bg-gray-300 rounded"
+                  className="px-4 py-2 bg-gray-200 hover:bg-gray-300 dark:bg-gray-600 dark:hover:bg-gray-500 rounded dark:text-gray-100"
                 >
                   取消
                 </button>
@@ -209,15 +225,15 @@ function Dashboard() {
       {/* Add config dialog */}
       {showAddCfgDialog && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white p-6 rounded-lg shadow-xl max-w-md w-full">
-            <h2 className="text-lg font-bold mb-4">添加配置</h2>
+          <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-xl max-w-md w-full">
+            <h2 className="text-lg font-bold mb-4 dark:text-gray-100">添加配置</h2>
             <div className="space-y-4">
               <div>
-                <label className="block text-sm font-medium mb-1">目标工作区</label>
+                <label className="block text-sm font-medium mb-1 dark:text-gray-300">目标工作区</label>
                 <select
                   value={cfgWorkspaceId ?? ''}
                   onChange={e => setCfgWorkspaceId(Number(e.target.value))}
-                  className="w-full px-3 py-2 border border-gray-300 rounded"
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-700 dark:text-gray-100"
                 >
                   {workspaces.map(ws => (
                     <option key={ws.id} value={ws.id}>{ws.name}</option>
@@ -225,28 +241,28 @@ function Dashboard() {
                 </select>
               </div>
               <div>
-                <label className="block text-sm font-medium mb-1">名称</label>
+                <label className="block text-sm font-medium mb-1 dark:text-gray-300">名称</label>
                 <input
                   type="text"
                   value={cfgName}
                   onChange={e => setCfgName(e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded"
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-700 dark:text-gray-100"
                   placeholder="例如: 生产环境配置"
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium mb-1">文件路径（相对工作区）</label>
+                <label className="block text-sm font-medium mb-1 dark:text-gray-300">文件路径（相对工作区）</label>
                 <div className="flex gap-2">
                   <input
                     type="text"
                     value={cfgPath}
                     onChange={e => setCfgPath(e.target.value)}
-                    className="flex-1 px-3 py-2 border border-gray-300 rounded"
+                    className="flex-1 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-700 dark:text-gray-100"
                     placeholder="例如: config/app.json"
                   />
                   <button
                     onClick={handleSelectCfgFile}
-                    className="px-3 py-2 bg-gray-200 hover:bg-gray-300 rounded"
+                    className="px-3 py-2 bg-gray-200 hover:bg-gray-300 dark:bg-gray-600 dark:hover:bg-gray-500 rounded dark:text-gray-100"
                   >
                     浏览
                   </button>
@@ -255,7 +271,7 @@ function Dashboard() {
               <div className="flex gap-2 justify-end">
                 <button
                   onClick={() => { setShowAddCfgDialog(false); setCfgWorkspaceId(null); setCfgName(''); setCfgPath(''); }}
-                  className="px-4 py-2 bg-gray-200 hover:bg-gray-300 rounded"
+                  className="px-4 py-2 bg-gray-200 hover:bg-gray-300 dark:bg-gray-600 dark:hover:bg-gray-500 rounded dark:text-gray-100"
                 >
                   取消
                 </button>

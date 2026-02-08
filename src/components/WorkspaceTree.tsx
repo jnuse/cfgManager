@@ -1,5 +1,13 @@
+import { useState, useEffect, useRef } from 'react';
 import { invoke } from '@tauri-apps/api/core';
+import { revealItemInDir } from '@tauri-apps/plugin-opener';
 import useConfigStore, { Workspace, Config } from '../stores/configStore';
+
+interface ContextMenu {
+  x: number;
+  y: number;
+  config: Config;
+}
 
 function WorkspaceTree() {
   const workspaces = useConfigStore(s => s.workspaces);
@@ -10,6 +18,39 @@ function WorkspaceTree() {
   const toggleWorkspace = useConfigStore(s => s.toggleWorkspace);
   const removeWorkspace = useConfigStore(s => s.removeWorkspace);
   const removeConfig = useConfigStore(s => s.removeConfig);
+
+  const [ctxMenu, setCtxMenu] = useState<ContextMenu | null>(null);
+  const menuRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const close = (e: MouseEvent) => {
+      if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
+        setCtxMenu(null);
+      }
+    };
+    document.addEventListener('mousedown', close);
+    return () => document.removeEventListener('mousedown', close);
+  }, []);
+
+  const handleContextMenu = (e: React.MouseEvent, config: Config) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setCtxMenu({ x: e.clientX, y: e.clientY, config });
+  };
+
+  const handleRevealInExplorer = async () => {
+    if (!ctxMenu) return;
+    const ws = workspaces.find(w => w.id === ctxMenu.config.workspace_id);
+    if (!ws) return;
+    const sep = ws.root_path.includes('\\') ? '\\' : '/';
+    const absPath = ws.root_path + sep + ctxMenu.config.path.replace(/\//g, sep);
+    try {
+      await revealItemInDir(absPath);
+    } catch (err) {
+      alert('打开资源管理器失败: ' + err);
+    }
+    setCtxMenu(null);
+  };
 
   const getConfigsForWorkspace = (wsId: number): Config[] =>
     configs.filter(c => c.workspace_id === wsId);
@@ -61,14 +102,14 @@ function WorkspaceTree() {
   };
 
   return (
-    <div className="w-64 bg-gray-50 border-r border-gray-200 overflow-y-auto flex-shrink-0">
+    <div className="w-64 bg-gray-50 dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700 overflow-y-auto flex-shrink-0">
       <div className="p-3">
-        <h2 className="text-sm font-semibold text-gray-500 uppercase tracking-wider mb-3">
+        <h2 className="text-sm font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-3">
           工作区
         </h2>
 
         {workspaces.length === 0 ? (
-          <p className="text-sm text-gray-400 px-2">暂无工作区</p>
+          <p className="text-sm text-gray-400 dark:text-gray-500 px-2">暂无工作区</p>
         ) : (
           <div className="space-y-1">
             {workspaces.map(ws => {
@@ -80,7 +121,7 @@ function WorkspaceTree() {
                   {/* Workspace node */}
                   <div
                     onClick={() => toggleWorkspace(ws.id)}
-                    className="flex items-center gap-1 px-2 py-1.5 rounded cursor-pointer hover:bg-gray-200 group"
+                    className="flex items-center gap-1 px-2 py-1.5 rounded cursor-pointer hover:bg-gray-200 dark:hover:bg-gray-700 group"
                   >
                     <span className="text-xs text-gray-400 w-4 text-center flex-shrink-0">
                       {expanded ? '▼' : '▶'}
@@ -102,18 +143,19 @@ function WorkspaceTree() {
 
                   {/* Config list under workspace */}
                   {expanded && (
-                    <div className="ml-4 border-l border-gray-200">
+                    <div className="ml-4 border-l border-gray-200 dark:border-gray-600">
                       {wsConfigs.length === 0 ? (
-                        <p className="text-xs text-gray-400 pl-3 py-1">暂无配置</p>
+                        <p className="text-xs text-gray-400 dark:text-gray-500 pl-3 py-1">暂无配置</p>
                       ) : (
                         wsConfigs.map(config => (
                           <div
                             key={config.id}
                             onClick={() => handleSelectConfig(config)}
+                            onContextMenu={(e) => handleContextMenu(e, config)}
                             className={`flex items-center gap-1 pl-3 pr-2 py-1 cursor-pointer group ${
                               selectedConfig?.id === config.id
-                                ? 'bg-blue-100 text-blue-700'
-                                : 'hover:bg-gray-100 text-gray-700'
+                                ? 'bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300'
+                                : 'hover:bg-gray-100 text-gray-700 dark:hover:bg-gray-700 dark:text-gray-300'
                             }`}
                           >
                             <span className="text-xs truncate flex-1" title={config.path}>
@@ -137,6 +179,28 @@ function WorkspaceTree() {
           </div>
         )}
       </div>
+
+      {/* Context menu */}
+      {ctxMenu && (
+        <div
+          ref={menuRef}
+          className="fixed bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded shadow-lg py-1 z-50"
+          style={{ left: ctxMenu.x, top: ctxMenu.y }}
+        >
+          <button
+            onClick={handleRevealInExplorer}
+            className="w-full text-left px-4 py-1.5 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-600"
+          >
+            在资源管理器中打开
+          </button>
+          <button
+            onClick={(e) => { handleDeleteConfig(ctxMenu.config.id, e); setCtxMenu(null); }}
+            className="w-full text-left px-4 py-1.5 text-sm text-red-600 dark:text-red-400 hover:bg-gray-100 dark:hover:bg-gray-600"
+          >
+            删除配置
+          </button>
+        </div>
+      )}
     </div>
   );
 }
