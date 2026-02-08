@@ -101,33 +101,94 @@ fn sanitize_yaml_value(value: &YamlValue) -> YamlValue {
 }
 
 fn sanitize_toml(content: &str) -> Result<String, SanitizerError> {
-    let value: toml::Value = toml::from_str(content)
+    let mut doc = content
+        .parse::<toml_edit::DocumentMut>()
         .map_err(|e| SanitizerError::ParseError(format!("Invalid TOML: {}", e)))?;
 
-    let sanitized = sanitize_toml_value(&value);
+    let keys: Vec<String> = doc
+        .as_table()
+        .iter()
+        .map(|(k, _)| k.to_string())
+        .collect();
+    for key in keys {
+        if let Some(item) = doc.get_mut(&key) {
+            sanitize_toml_item(item);
+        }
+    }
 
-    toml::to_string_pretty(&sanitized)
-        .map_err(|e| SanitizerError::ParseError(format!("Failed to serialize TOML: {}", e)))
+    Ok(doc.to_string())
 }
 
-fn sanitize_toml_value(value: &toml::Value) -> toml::Value {
-    match value {
-        toml::Value::Table(map) => {
-            let mut sanitized_map = toml::map::Map::new();
-            for (key, val) in map {
-                sanitized_map.insert(key.clone(), sanitize_toml_value(val));
+fn sanitize_toml_item(item: &mut toml_edit::Item) {
+    match item {
+        toml_edit::Item::Value(v) => sanitize_toml_edit_value(v),
+        toml_edit::Item::Table(t) => {
+            let keys: Vec<String> = t.iter().map(|(k, _)| k.to_string()).collect();
+            for key in keys {
+                if let Some(child) = t.get_mut(&key) {
+                    sanitize_toml_item(child);
+                }
             }
-            toml::Value::Table(sanitized_map)
         }
-        toml::Value::Array(arr) => {
-            toml::Value::Array(arr.iter().map(sanitize_toml_value).collect())
+        toml_edit::Item::ArrayOfTables(arr) => {
+            for table in arr.iter_mut() {
+                let keys: Vec<String> =
+                    table.iter().map(|(k, _)| k.to_string()).collect();
+                for key in keys {
+                    if let Some(child) = table.get_mut(&key) {
+                        sanitize_toml_item(child);
+                    }
+                }
+            }
         }
-        toml::Value::String(_) => toml::Value::String("***".to_string()),
-        toml::Value::Integer(_) => toml::Value::Integer(0),
-        toml::Value::Float(_) => toml::Value::Float(0.0),
-        toml::Value::Boolean(_) => toml::Value::Boolean(false),
-        toml::Value::Datetime(dt) => toml::Value::Datetime(dt.clone()),
+        toml_edit::Item::None => {}
     }
+}
+
+fn sanitize_toml_edit_value(value: &mut toml_edit::Value) {
+    let decor = value.decor().clone();
+    let new_val = match value {
+        toml_edit::Value::String(_) => {
+            let mut v = toml_edit::Value::from("***");
+            *v.decor_mut() = decor;
+            v
+        }
+        toml_edit::Value::Integer(_) => {
+            let mut v = toml_edit::Value::from(0);
+            *v.decor_mut() = decor;
+            v
+        }
+        toml_edit::Value::Float(_) => {
+            let mut v = toml_edit::Value::from(0.0);
+            *v.decor_mut() = decor;
+            v
+        }
+        toml_edit::Value::Boolean(_) => {
+            let mut v = toml_edit::Value::from(false);
+            *v.decor_mut() = decor;
+            v
+        }
+        toml_edit::Value::Datetime(_) => return,
+        toml_edit::Value::Array(arr) => {
+            for i in 0..arr.len() {
+                if let Some(elem) = arr.get_mut(i) {
+                    sanitize_toml_edit_value(elem);
+                }
+            }
+            return;
+        }
+        toml_edit::Value::InlineTable(t) => {
+            let keys: Vec<String> =
+                t.iter().map(|(k, _)| k.to_string()).collect();
+            for key in keys {
+                if let Some(child) = t.get_mut(&key) {
+                    sanitize_toml_edit_value(child);
+                }
+            }
+            return;
+        }
+    };
+    *value = new_val;
 }
 
 fn sanitize_env(content: &str) -> Result<String, SanitizerError> {
@@ -175,5 +236,45 @@ mod tests {
         assert!(result.contains("API_KEY=***"));
         assert!(result.contains("# Comment"));
         assert!(result.contains("DB_PASSWORD=***"));
+    }
+
+    #[test]
+    fn test_sanitize_toml_preserves_order_and_comments() {
+        let input = r#"[tool.poetry]
+name = "Chatchat"
+version = "0.3.0"
+# this is a comment
+description = "Langchain-Chatchat"
+
+[tool.poetry.dependencies]
+python = ">=3.8.1"
+
+[tool.ruff]
+extend-include = ["*.ipynb"]
+
+# source config
+[[tool.poetry.source]]
+name = "tsinghua"
+url = "https://pypi.tuna.tsinghua.edu.cn/simple/"
+"#;
+        let result = sanitize_toml(input).unwrap();
+
+        // Comments preserved
+        assert!(result.contains("# this is a comment"));
+        assert!(result.contains("# source config"));
+
+        // Values sanitized
+        assert!(result.contains("name = \"***\""));
+        assert!(result.contains("version = \"***\""));
+        assert!(result.contains("python = \"***\""));
+
+        // Order preserved: [tool.poetry] before [tool.poetry.dependencies] before [tool.ruff]
+        let pos_poetry = result.find("[tool.poetry]").unwrap();
+        let pos_deps = result.find("[tool.poetry.dependencies]").unwrap();
+        let pos_ruff = result.find("[tool.ruff]").unwrap();
+        let pos_source = result.find("[[tool.poetry.source]]").unwrap();
+        assert!(pos_poetry < pos_deps);
+        assert!(pos_deps < pos_ruff);
+        assert!(pos_ruff < pos_source);
     }
 }
