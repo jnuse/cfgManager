@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { invoke } from '@tauri-apps/api/core';
+import { ask, message } from '@tauri-apps/plugin-dialog';
 import Editor from '@monaco-editor/react';
 import type * as Monaco from 'monaco-editor';
 import useConfigStore from '../stores/configStore';
@@ -54,48 +55,50 @@ function TabbedEditor() {
     if (!selectedConfig) return;
     try {
       await invoke('update_original_content', { id: selectedConfig.id, content: originalContent });
-      alert('原始内容已保存');
+      await message('原始内容已保存', { title: '保存成功' });
     } catch (err) {
-      alert('保存失败: ' + err);
+      await message('保存失败: ' + err, { title: '错误', kind: 'error' });
     }
   };
   const handleSaveSanitized = async () => {
     if (!selectedConfig) return;
     try {
       await invoke('update_sanitized_content', { id: selectedConfig.id, content: sanitizedContent });
-      alert('脱敏内容已保存');
+      await message('脱敏内容已保存', { title: '保存成功' });
     } catch (err) {
-      alert('保存失败: ' + err);
+      await message('保存失败: ' + err, { title: '错误', kind: 'error' });
     }
   };
 
   const handleWriteDirect = async () => {
     if (!selectedConfig) return;
     const root = getWorkspaceRoot();
-    if (!root) { alert('找不到所属工作区'); return; }
-    if (!confirm('确定将原始内容写入文件吗？')) return;
+    if (!root) { await message('找不到所属工作区', { title: '错误', kind: 'error' }); return; }
+    const confirmed = await ask('确定将原始内容写入文件吗？', { title: '写入确认', kind: 'warning' });
+    if (!confirmed) return;
     try {
       // 先将编辑器当前内容保存到数据库，再写入文件
       await invoke('update_original_content', { id: selectedConfig.id, content: originalContent });
       await invoke('write_to_file_direct', { id: selectedConfig.id, workspaceRoot: root });
-      alert('文件写入成功');
+      await message('文件写入成功', { title: '写入成功' });
     } catch (err) {
-      alert('写入文件失败: ' + err);
+      await message('写入文件失败: ' + err, { title: '错误', kind: 'error' });
     }
   };
 
   const handleWriteSanitized = async () => {
     if (!selectedConfig) return;
     const root = getWorkspaceRoot();
-    if (!root) { alert('找不到所属工作区'); return; }
-    if (!confirm('确定将脱敏内容写入文件吗？')) return;
+    if (!root) { await message('找不到所属工作区', { title: '错误', kind: 'error' }); return; }
+    const confirmed = await ask('确定将脱敏内容写入文件吗？', { title: '写入确认', kind: 'warning' });
+    if (!confirmed) return;
     try {
       // 先将编辑器当前脱敏内容保存到数据库，再写入文件
       await invoke('update_sanitized_content', { id: selectedConfig.id, content: sanitizedContent });
       await invoke('write_to_file_sanitized', { id: selectedConfig.id, workspaceRoot: root });
-      alert('脱敏文件写入成功');
+      await message('脱敏文件写入成功', { title: '写入成功' });
     } catch (err) {
-      alert('写入文件失败: ' + err);
+      await message('写入文件失败: ' + err, { title: '错误', kind: 'error' });
     }
   };
 
@@ -178,7 +181,7 @@ function TabbedEditor() {
     );
   }
   return (
-    <div className="flex-1 flex flex-col bg-white dark:bg-gray-900">
+    <div className="flex-1 flex flex-col bg-white dark:bg-gray-900 min-h-0">
       {/* Toolbar */}
       <div className="flex border-b border-gray-200 dark:border-gray-700 flex-shrink-0">
         {!isSplit && (
@@ -220,10 +223,10 @@ function TabbedEditor() {
 
       {/* Editor */}
       {isSplit ? (
-        <div className="flex-1 flex">
-          <div className="flex-1 flex flex-col border-r border-gray-200 dark:border-gray-700">
+        <div className="flex-1 flex min-h-0">
+          <div className="flex-1 flex flex-col border-r border-gray-200 dark:border-gray-700 min-w-0">
             <div className="px-3 py-1 text-xs text-gray-500 dark:text-gray-400 border-b border-gray-200 dark:border-gray-700 flex-shrink-0">原始</div>
-            <div className="flex-1">
+            <div className="flex-1 relative overflow-hidden">
               <Editor
                 height="100%"
                 language={getLanguage()}
@@ -235,9 +238,9 @@ function TabbedEditor() {
               />
             </div>
           </div>
-          <div className="flex-1 flex flex-col">
+          <div className="flex-1 flex flex-col min-w-0">
             <div className="px-3 py-1 text-xs text-gray-500 dark:text-gray-400 border-b border-gray-200 dark:border-gray-700 flex-shrink-0">脱敏</div>
-            <div className="flex-1">
+            <div className="flex-1 relative overflow-hidden">
               <Editor
                 height="100%"
                 language={getLanguage()}
@@ -251,7 +254,7 @@ function TabbedEditor() {
           </div>
         </div>
       ) : (
-        <div className="flex-1">
+        <div className="flex-1 relative overflow-hidden">
           {activeTab === 'original' ? (
             <Editor
               height="100%"
