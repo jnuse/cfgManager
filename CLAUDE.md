@@ -57,7 +57,9 @@ confManager/
 ├── src/                        # React 前端
 │   ├── components/
 │   │   ├── WorkspaceTree.tsx   # 工作区树形导航（右键菜单）
-│   │   └── TabbedEditor.tsx    # 双视图编辑器（标签页/分栏，自动保存，自动/手动脱敏切换）
+│   │   └── TabbedEditor.tsx    # 双视图编辑器（标签页/分栏，滚动同步，写入操作）
+│   ├── hooks/
+│   │   └── useAutoSave.ts      # 自动保存/脱敏预览 hook（debounce、竞态防护、定时器管理）
 │   ├── pages/
 │   │   └── Dashboard.tsx       # 主界面（工作区/配置管理对话框）
 │   ├── stores/

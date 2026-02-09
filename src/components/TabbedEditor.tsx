@@ -180,30 +180,36 @@ function TabbedEditor() {
         <div className="flex-1 flex min-h-0">
           <div className="flex-1 flex flex-col border-r border-gray-200 dark:border-gray-700 min-w-0">
             <div className="px-3 py-1 text-xs text-gray-500 dark:text-gray-400 border-b border-gray-200 dark:border-gray-700 flex-shrink-0">原始</div>
-            <div className="flex-1 relative overflow-hidden">
-              <Editor height="100%" language={language} value={originalContent} onChange={handleOriginalChange}
-                onMount={handleOriginalMount} theme={monacoTheme} options={editorOptions} />
+            <div className="flex-1 relative">
+              <div className="absolute inset-0">
+                <Editor height="100%" language={language} value={originalContent} onChange={handleOriginalChange}
+                  onMount={handleOriginalMount} theme={monacoTheme} options={editorOptions} />
+              </div>
             </div>
           </div>
           <div className="flex-1 flex flex-col min-w-0">
             <div className="px-3 py-1 text-xs text-gray-500 dark:text-gray-400 border-b border-gray-200 dark:border-gray-700 flex-shrink-0">
               脱敏{autoSanitize ? '（只读）' : ''}
             </div>
-            <div className="flex-1 relative overflow-hidden">
-              <Editor height="100%" language={language} value={sanitizedContent} onChange={handleSanitizedChange}
-                onMount={handleSanitizedMount} theme={monacoTheme} options={autoSanitize ? readOnlyOptions : editorOptions} />
+            <div className="flex-1 relative">
+              <div className="absolute inset-0">
+                <Editor height="100%" language={language} value={sanitizedContent} onChange={handleSanitizedChange}
+                  onMount={handleSanitizedMount} theme={monacoTheme} options={autoSanitize ? readOnlyOptions : editorOptions} />
+              </div>
             </div>
           </div>
         </div>
       ) : (
-        <div className="flex-1 relative overflow-hidden">
-          {activeTab === 'original' ? (
-            <Editor height="100%" language={language} value={originalContent} onChange={handleOriginalChange}
-              theme={monacoTheme} options={editorOptions} />
-          ) : (
-            <Editor height="100%" language={language} value={sanitizedContent} onChange={handleSanitizedChange}
-              theme={monacoTheme} options={autoSanitize ? readOnlyOptions : editorOptions} />
-          )}
+        <div className="flex-1 relative">
+          <div className="absolute inset-0">
+            {activeTab === 'original' ? (
+              <Editor height="100%" language={language} value={originalContent} onChange={handleOriginalChange}
+                theme={monacoTheme} options={editorOptions} />
+            ) : (
+              <Editor height="100%" language={language} value={sanitizedContent} onChange={handleSanitizedChange}
+                theme={monacoTheme} options={autoSanitize ? readOnlyOptions : editorOptions} />
+            )}
+          </div>
         </div>
       )}
 
