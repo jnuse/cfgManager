@@ -42,6 +42,9 @@ interface ConfigStore {
   autoSanitize: boolean;
   setAutoSanitize: (auto: boolean) => void;
 
+  writeScope: 'file' | 'workspace';
+  setWriteScope: (scope: 'file' | 'workspace') => void;
+
   theme: Theme;
   setTheme: (theme: Theme) => void;
 
@@ -95,6 +98,12 @@ const useConfigStore = create<ConfigStore>((set) => ({
   setAutoSanitize: (auto) => {
     localStorage.setItem('autoSanitize', String(auto));
     set({ autoSanitize: auto });
+  },
+
+  writeScope: (localStorage.getItem('writeScope') as 'file' | 'workspace') || 'workspace',
+  setWriteScope: (scope) => {
+    localStorage.setItem('writeScope', scope);
+    set({ writeScope: scope });
   },
 
   theme: (localStorage.getItem('theme') as Theme) || 'system',

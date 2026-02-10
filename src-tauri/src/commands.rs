@@ -216,6 +216,59 @@ pub async fn write_to_file_sanitized(
 }
 
 #[tauri::command]
+pub async fn write_workspace_direct(
+    workspace_id: i64,
+    workspace_root: String,
+    state: State<'_, AppState>,
+) -> Result<usize, String> {
+    let pool = state.pool.lock().unwrap().clone().ok_or("数据库未初始化")?;
+
+    let configs = db::get_configs_by_workspace(&pool, workspace_id)
+        .await
+        .map_err(|e| format!("获取配置列表失败: {}", e))?;
+
+    let mut count = 0;
+    for config in &configs {
+        file_system::write_file(&workspace_root, &config.path, &config.original_content)
+            .map_err(|e| format!("写入文件 {} 失败: {}", config.path, e))?;
+        count += 1;
+    }
+    Ok(count)
+}
+
+#[tauri::command]
+pub async fn write_workspace_sanitized(
+    workspace_id: i64,
+    workspace_root: String,
+    state: State<'_, AppState>,
+) -> Result<usize, String> {
+    let pool = state.pool.lock().unwrap().clone().ok_or("数据库未初始化")?;
+
+    let configs = db::get_configs_by_workspace(&pool, workspace_id)
+        .await
+        .map_err(|e| format!("获取配置列表失败: {}", e))?;
+
+    let mut count = 0;
+    for config in &configs {
+        let sanitized_content = if let Some(ref manual_content) = config.sanitized_content {
+            manual_content.clone()
+        } else {
+            match sanitizer::sanitize_content(&config.original_content, &config.path) {
+                Ok(sanitized) => sanitized,
+                Err(crate::sanitizer::SanitizerError::UnsupportedFormat(_)) => {
+                    config.original_content.clone()
+                }
+                Err(e) => return Err(format!("脱敏文件 {} 失败: {}", config.path, e)),
+            }
+        };
+        file_system::write_file(&workspace_root, &config.path, &sanitized_content)
+            .map_err(|e| format!("写入文件 {} 失败: {}", config.path, e))?;
+        count += 1;
+    }
+    Ok(count)
+}
+
+#[tauri::command]
 pub async fn delete_config(id: i64, state: State<'_, AppState>) -> Result<(), String> {
     let pool = state.pool.lock().unwrap().clone().ok_or("数据库未初始化")?;
 

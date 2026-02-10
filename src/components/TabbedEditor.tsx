@@ -23,6 +23,8 @@ function TabbedEditor() {
   const setEditorLayout = useConfigStore(s => s.setEditorLayout);
   const autoSanitize = useConfigStore(s => s.autoSanitize);
   const setAutoSanitize = useConfigStore(s => s.setAutoSanitize);
+  const writeScope = useConfigStore(s => s.writeScope);
+  const setWriteScope = useConfigStore(s => s.setWriteScope);
 
   const { originalContent, sanitizedContent, loading, handleOriginalChange, handleSanitizedChange } =
     useAutoSave(selectedConfig, autoSanitize);
@@ -91,22 +93,35 @@ function TabbedEditor() {
     if (!root) { await message('找不到所属工作区', { title: '错误', kind: 'error' }); return; }
 
     const label = type === 'direct' ? '原始' : '脱敏';
-    const confirmed = await ask(`确定将${label}内容写入文件吗？`, { title: '写入确认', kind: 'warning' });
+    const scopeLabel = writeScope === 'workspace' ? '工作区所有配置文件' : '当前文件';
+    const confirmed = await ask(`确定将${label}内容写入${scopeLabel}吗？`, { title: '写入确认', kind: 'warning' });
     if (!confirmed) return;
 
     try {
-      if (type === 'direct') {
-        await invoke('update_original_content', { id: selectedConfig.id, content: originalContent });
-        await invoke('write_to_file_direct', { id: selectedConfig.id, workspaceRoot: root });
+      if (writeScope === 'workspace') {
+        if (type === 'direct') {
+          await invoke('update_original_content', { id: selectedConfig.id, content: originalContent });
+          const count = await invoke<number>('write_workspace_direct', { workspaceId: selectedConfig.workspace_id, workspaceRoot: root });
+          await message(`已写入 ${count} 个${label}文件`, { title: '写入成功' });
+        } else {
+          await invoke('update_sanitized_content', { id: selectedConfig.id, content: sanitizedContent });
+          const count = await invoke<number>('write_workspace_sanitized', { workspaceId: selectedConfig.workspace_id, workspaceRoot: root });
+          await message(`已写入 ${count} 个${label}文件`, { title: '写入成功' });
+        }
       } else {
-        await invoke('update_sanitized_content', { id: selectedConfig.id, content: sanitizedContent });
-        await invoke('write_to_file_sanitized', { id: selectedConfig.id, workspaceRoot: root });
+        if (type === 'direct') {
+          await invoke('update_original_content', { id: selectedConfig.id, content: originalContent });
+          await invoke('write_to_file_direct', { id: selectedConfig.id, workspaceRoot: root });
+        } else {
+          await invoke('update_sanitized_content', { id: selectedConfig.id, content: sanitizedContent });
+          await invoke('write_to_file_sanitized', { id: selectedConfig.id, workspaceRoot: root });
+        }
+        await message(`${label}文件写入成功`, { title: '写入成功' });
       }
-      await message(`${label}文件写入成功`, { title: '写入成功' });
     } catch (err) {
       await message('写入文件失败: ' + err, { title: '错误', kind: 'error' });
     }
-  }, [selectedConfig, workspaces, originalContent, sanitizedContent]);
+  }, [selectedConfig, workspaces, originalContent, sanitizedContent, writeScope]);
 
   // --- 编辑器选项 ---
   const editorOptions: Monaco.editor.IStandaloneEditorConstructionOptions = {
@@ -168,6 +183,13 @@ function TabbedEditor() {
           }`}
           title={autoSanitize ? '当前：自动脱敏（点击切换为手动）' : '当前：手动脱敏（点击切换为自动）'}
         >{autoSanitize ? '自动脱敏' : '手动脱敏'}</button>
+        <button
+          onClick={() => setWriteScope(writeScope === 'workspace' ? 'file' : 'workspace')}
+          className={`px-3 py-2 text-xs self-center ${
+            writeScope === 'workspace' ? 'text-blue-600 dark:text-blue-400' : 'text-gray-500 dark:text-gray-400'
+          }`}
+          title={writeScope === 'workspace' ? '当前：写入整个工作区（点击切换为单文件）' : '当前：写入单文件（点击切换为整个工作区）'}
+        >{writeScope === 'workspace' ? '全部写入' : '单文件写入'}</button>
         <button
           onClick={() => setEditorLayout(isSplit ? 'tab' : 'split')}
           className="px-3 py-2 text-xs text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 self-center"

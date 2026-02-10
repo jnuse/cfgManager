@@ -41,6 +41,8 @@ pub fn run() {
             commands::update_sanitized_content,
             commands::write_to_file_direct,
             commands::write_to_file_sanitized,
+            commands::write_workspace_direct,
+            commands::write_workspace_sanitized,
             commands::delete_config,
             commands::get_sanitized_preview,
         ])
